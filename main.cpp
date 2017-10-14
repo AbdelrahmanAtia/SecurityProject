@@ -253,6 +253,294 @@ public:
 	}
 
 
+	// division is implemented using donald knuth algorithm
+	BigInt divide(BigInt & other)
+	{
+		BigInt divisionResult = divide(other, "q");
+		if (signNum != other.signNum)
+			divisionResult.signNum = -1;
+		return divisionResult;
+	}
+	BigInt divide(BigInt & other, string str)
+	{
+		int  x[w + 1];
+		fillArrayX(x, digits);
+		int y[w + 1];
+		fillArrayY(y, other.digits);
+
+		int q[w + 1];
+		int r[w + 1];
+
+		fill_n(q, w + 1, 0);
+		fill_n(r, w + 1, 0);
+
+		division(x, y, q, r);
+
+		string quotient = toString(q);
+		string remainder = toString(r);
+
+
+		if (str.compare("q") == 0)
+			return  BigInt(quotient);
+		else
+			return  BigInt(remainder);
+
+	}
+
+
+
+	void fillArrayX(int x[], vector <long long> v)
+	{
+		int counter = 0;
+		for (int s = v.size() - 1; s >= 0; s--)
+		{
+			string val = to_string(v[s]);
+			while (val.size() < 9)
+			{
+				val = '0' + val;
+			}
+			x[counter] = val.at(8) - '0';   counter++;
+			x[counter] = val.at(7) - '0';   counter++;
+			x[counter] = val.at(6) - '0';   counter++;
+			x[counter] = val.at(5) - '0';   counter++;
+			x[counter] = val.at(4) - '0';   counter++;
+			x[counter] = val.at(3) - '0';   counter++;
+			x[counter] = val.at(2) - '0';   counter++;
+			x[counter] = val.at(1) - '0';   counter++;
+			x[counter] = val.at(0) - '0';   counter++;
+
+		}
+		while (counter <= w)
+		{
+			x[counter] = 0;
+			counter++;
+		}
+
+	}
+
+	void fillArrayY(int y[], vector <long long> v)
+	{
+		int counter = 0;
+		for (int s = v.size() - 1; s >= 0; s--)
+		{
+			string val = to_string(v[s]);
+			while (val.size() < 9)
+			{
+				val = '0' + val;
+			}
+			y[counter] = val.at(8) - '0';   counter++;
+			y[counter] = val.at(7) - '0';   counter++;
+			y[counter] = val.at(6) - '0';   counter++;
+			y[counter] = val.at(5) - '0';   counter++;
+			y[counter] = val.at(4) - '0';   counter++;
+			y[counter] = val.at(3) - '0';   counter++;
+			y[counter] = val.at(2) - '0';   counter++;
+			y[counter] = val.at(1) - '0';   counter++;
+			y[counter] = val.at(0) - '0';   counter++;
+		}
+		while (counter <= w)
+		{
+			y[counter] = 0;
+			counter++;
+		}
+	}
+	string toString(int a[])
+	{
+		string result = "";
+		for (int i = 0; i < length(a); i++)
+			result = to_string(a[i]) + result;
+
+		return result;
+	}
+
+	//algorithm 9
+	void division(int x[], int y[], int q[], int r[])
+	{
+		int m, n, y1;
+		m = length(y);
+		if (m == 1)
+		{
+			y1 = y[m - 1];
+			if (y1 > 0)
+			{
+				quotient(q, x, y1);
+				remainder(r, x, y1);
+			}
+			else
+				cout << "OVERFLOW_division" << "\n";
+		}
+		else
+		{
+			n = length(x);
+			if (m > n)
+			{
+				q = zero;
+				//r = x;  this is wrong , the correction is to use a loop
+
+				for (int p = 0; p < n; p++) {
+					r[p] = x[p];
+				}
+			}
+			else
+			{
+				//2 <= m <= n <= w
+				longDivide(x, y, q, r, n, m);
+			}
+		}
+	}
+
+	// algorithm 8
+	void longDivide(int x[], int y[], int q[], int r[], int n, int m)
+	{
+		//2 <= m <= n <= w
+		int d[w + 1];
+		int dq[w + 1];
+		int f, k, qt;
+
+		f = b / (y[m - 1] + 1);
+
+		product(r, x, f);
+		product(d, y, f);
+
+		// q = zero;  //useless , because it is already defined
+
+		for (k = n - m; k >= 0; k--)
+		{
+			// 2 <= m <= k+m <= n <= w
+			qt = trial(r, d, k, m);
+			product(dq, d, qt);
+			if (smaller(r, dq, k, m))
+			{
+				qt = qt - 1;
+				product(dq, d, qt);
+			}
+			q[k] = qt;
+			difference(r, dq, k, m);
+		}
+		quotient(r, r, f);
+	}
+
+	//algorithm 7
+	void difference(int r[], int dq[], int k, int m)
+	{
+		int borrow, diff, i;
+		borrow = 0;
+		for (i = 0; i <= m; i++)
+		{
+			diff = r[i + k] - dq[i] - borrow + b;
+			r[i + k] = diff % b;
+			borrow = 1 - diff / b;
+		}
+		if (borrow != 0)
+			cout << "OVERFLOW_diffrence" << "\n";
+	}
+
+	// algorithm 6
+	bool smaller(int r[], int dq[], int k, int m)
+	{
+		// 0 <= k <= k + m <= w  you have to verify this assumption
+		int i, j;
+		i = m;  j = 0;
+
+		while (i != j)
+		{
+			if (r[i + k] != dq[i])
+				j = i;
+			else
+				i = i - 1;
+		}
+		if (r[i + k] < dq[i])
+			return true;
+		else
+			return false;
+	}
+
+	// algorithm 5
+	int trial(int r[], int d[], int k, int m)
+	{
+		//2 <= m <= k+m <= w
+		int d2, km, r3;
+		km = k + m;
+		r3 = (r[km] * b + r[km - 1]) * b + r[km - 2];
+		d2 = d[m - 1] * b + d[m - 2];
+		return min(r3 / d2, b - 1);
+	}
+
+	//Algorithm 4
+	void remainder(int x[], int y[], int k)
+	{
+
+		int carry, i, m;
+		m = length(y);
+
+		//x = zero;
+		fill_n(x, w + 1, 0);
+		carry = 0;
+		for (i = m - 1; i >= 0; i--)
+		{
+			carry = (carry * b + y[i]) % k;
+		}
+		x[0] = carry;
+	}
+
+	//algorithm 3
+	void quotient(int x[], int y[], int k)
+	{
+
+		int carry, i, m, temp;
+		m = length(y);
+
+		carry = 0;
+		for (i = m - 1; i >= 0; i--)
+		{
+			temp = carry * b + y[i];
+			x[i] = temp / k;
+			carry = temp % k;
+		}
+	}
+
+
+	//algorithm 2
+
+	void product(int x[], int y[], int k)
+	{
+		int carry, i, m, temp;
+
+		m = length(y);
+		//	x =zero;
+		fill_n(x, w + 1, 0);
+		carry = 0;
+
+		for (i = 0; i <= (m - 1); i++)
+		{
+			temp = y[i] * k + carry;
+			x[i] = temp % b;
+			carry = temp / b;
+		}
+
+		if (m <= w)
+		{
+			x[m] = carry;
+		}
+		else if (carry != 0)
+			cout << "OVERFLOW_product" << "\n";
+	}
+
+	// algorithm 1
+	int length(int x[])
+	{
+		int i, j;
+		i = w; j = 0;
+		while (i != j)
+		{
+			if (x[i] != 0)
+				j = i;
+			else
+				i = i - 1;
+		}
+		return i + 1;
+	}
+
 	int compare(BigInt & g) {
 		int aIndex = 0;
 		int bIndex = 0;
@@ -318,6 +606,7 @@ public:
 
 	}
 
+
 	//converts bigInt to string, it is done only one at the end.
 	string toString() {
 		string result = "";
@@ -345,10 +634,12 @@ int main() {
 	BigInt addResult = p1.add(p2);
 	BigInt subResult = p1.sub(p2);
 	BigInt mulResult = p1.multiply(p2);
+	BigInt divResult = p2.divide(p1);
 
 	cout<<"p1 + p2 = "<< addResult.toString()<<"\n";
 	cout<<"p1 - p2 = "<< subResult.toString()<<"\n";
 	cout<<"p1 * p2 = "<< mulResult.toString()<<"\n";
+	cout<<"p2 / p1 = "<< divResult.toString()<<"\n";
 
 }
 
