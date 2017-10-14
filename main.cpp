@@ -207,6 +207,52 @@ public:
 		return BigInt(result);
 	}
 
+
+	BigInt multiply(BigInt & other)
+	{
+
+		/*if (zero(digits) || zero(other.digits))
+		return  BigInt("0");*/
+
+		long long digit;
+		long long carry = 0;
+		vector<long long> result;
+		BigInt finalResult("0");
+		int rightZero = 0;
+
+		for (int i = other.size - 1; i >= 0; i--)
+		{
+			for (int j = size - 1; j >= 0; j--)
+			{
+
+				digit = other.digits[i] * digits[j] + carry;
+				carry = digit / 1000000000;
+
+				result.insert(result.begin(), digit % 1000000000);
+			}
+
+			if (carry != 0)
+				result.insert(result.begin(), carry);
+
+			for (int s = 0; s < rightZero; s++)
+				result.push_back(0);
+
+			rightZero++;
+
+			BigInt temp = BigInt(result);
+
+			finalResult.digits = finalResult.add(temp).digits;
+			finalResult.size = finalResult.digits.size();
+			result.clear();
+			carry = 0;
+		}
+		if (signNum != other.signNum)
+			finalResult.signNum = -1;
+
+		return finalResult;
+	}
+
+
 	int compare(BigInt & g) {
 		int aIndex = 0;
 		int bIndex = 0;
@@ -246,14 +292,30 @@ public:
 	}
 
 	string removeZeros(string str) {
-		while (str.size() > 1) {
 
-			if (str.at(0) == '0')
-				str = str.substr(1);
+		int index = 0;
+
+		while(index < str.size())
+		{
+			if(str.at(index) == '0')
+				index++;
+
+			else if(str.at(index) == '-')
+				index++;
+
 			else
-				return str;
+				break;
 		}
+
+		if(index == str.size())
+			str = "0";
+		else if(signNum == 1)
+			str = str.substr(index);
+		else if(signNum == -1)
+			str = '-' + str.substr(index);
+
 		return str;
+
 	}
 
 	//converts bigInt to string, it is done only one at the end.
@@ -277,12 +339,16 @@ public:
 
 int main() {
 
-	BigInt p1("1111");
-	BigInt p2("2222");
+	BigInt p1("111");
+	BigInt p2("222");
 
-	BigInt result = p1.add(p2);
+	BigInt addResult = p1.add(p2);
+	BigInt subResult = p1.sub(p2);
+	BigInt mulResult = p1.multiply(p2);
 
-	cout<<"result = "<< result.toString()<<"\n";
+	cout<<"p1 + p2 = "<< addResult.toString()<<"\n";
+	cout<<"p1 - p2 = "<< subResult.toString()<<"\n";
+	cout<<"p1 * p2 = "<< mulResult.toString()<<"\n";
 
 }
 
