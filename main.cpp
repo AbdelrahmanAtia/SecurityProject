@@ -586,6 +586,174 @@ public:
 
 		return divide(other, "r");
 	}
+
+	BigInt modModified(BigInt & other)
+	{
+		/*if (isZero(other.digitsString))
+		cout << "non-positive modulus" << "\n";*/
+
+
+		BigInt thisObject = *this;
+
+		BigInt q = thisObject.divide(other);
+		BigInt r = thisObject.sub(q.multiply(other));
+
+
+		if (r.signNum == -1)
+		{
+			BigInt factor = r.divide(other); // it should be negative
+			factor.signNum = 1;
+			BigInt temp = other.multiply(factor);
+			r = r.add(temp);
+		}
+		//add other one more time if result is still negative
+
+		if (r.signNum == -1)
+			r = r.add(other);
+
+		return r;
+
+	}
+
+	BigInt modPow(BigInt & exponent, BigInt & m) {
+
+		/*if (isZero(m.digitsString))
+		cout<<"non-positive modulo"<<"\n";*/
+
+		BigInt zero("0");
+		BigInt one("1");
+		BigInt two("2");
+		if (exponent.equals(one))
+			return mod(m);
+
+		BigInt s("1");
+		BigInt t = *this;
+		BigInt u = exponent;
+
+
+		while (!u.equals(zero))
+		{
+			string str = to_string(u.digits[u.size - 1]);
+			int ch = str.at(str.size() - 1) - '0';
+
+			if (ch % 2 != 0)
+				s = s.multiply(t).mod(m);
+
+			u = u.divide(two);
+			t = t.multiply(t).mod(m);
+		}
+		return s;
+	}
+
+
+
+	BigInt modInv(BigInt & other)
+	{
+		/**
+		 * using extended ecluid algorithm
+		 */
+
+		//other couldn't be negative
+		BigInt ZERO("0");
+		BigInt ONE("1");
+
+		BigInt A1 = ONE;    BigInt A2 = ZERO;   BigInt A3 = other;
+
+		BigInt B1 = ZERO;   BigInt B2 = ONE;    BigInt B3 = *this;
+
+		BigInt T1 = ZERO;   BigInt T2 = ZERO;    BigInt T3 = ZERO;
+
+		BigInt Q = ZERO;
+
+		int i = 0;
+		while (true)
+		{
+			i++;
+			if (B3.equals(ZERO))
+			{
+
+				//inverse does not exist
+				return BigInt("-1");
+				break;
+			}
+
+			if (B3.equals(ONE))
+			{
+
+				BigInt result = B2.mod(other);
+				// make result positive
+
+				if (result.signNum == -1)
+				{
+					BigInt factor = result.divide(other); // it should be negative
+					factor.signNum = 1;
+					BigInt temp = other.multiply(factor);
+					result = result.add(temp);
+				}
+				//add other one more time if result is still negative
+
+				if (result.signNum == -1)
+					result = result.add(other);
+
+				return result;
+
+			}
+
+			Q = A3.divide(B3);
+
+			T1 = A1.sub(Q.multiply(B1));
+			if (T1.signNum == -1)  T1 = T1.modModified(other);
+
+			T2 = A2.sub(Q.multiply(B2));
+			if (T2.signNum == -1)  T2 = T2.modModified(other);
+
+			T3 = A3.sub(Q.multiply(B3));
+			if (T3.signNum == -1)  T3 = T3.modModified(other);
+
+			A1 = B1; A2 = B2; A3 = B3;
+
+			B1 = T1; B2 = T2; B3 = T3;
+		}
+	}
+
+
+	bool equals(BigInt & g)
+	{
+		int aIndex = 0;
+		int bIndex = 0;
+
+		while (aIndex < size)
+		{
+			if (digits[aIndex] == 0)
+				aIndex++;
+			else
+				break;
+		}
+		while (bIndex < g.size)
+		{
+			if (g.digits[bIndex] == 0)
+				bIndex++;
+			else
+				break;
+		}
+
+		int aActualSize = size - aIndex;
+		int bActualSize = g.size - bIndex;
+
+		if (aActualSize != bActualSize)
+			return false;
+		else
+		{
+			for (int s = 0; s < aActualSize; s++)
+			{
+				if (digits[s + aIndex] != g.digits[s + bIndex])
+					return false;
+			}
+			return true;
+		}
+
+	}
+
 	string removeZeros(string str) {
 
 		int index = 0;
@@ -637,12 +805,18 @@ int main() {
 
 	BigInt p1("11");
 	BigInt p2("222");
+	BigInt p3("6");
+	BigInt p4("111");
+	BigInt p5("16");
+
 
 	BigInt addResult = p1.add(p2);
 	BigInt subResult = p1.sub(p2);
 	BigInt mulResult = p1.multiply(p2);
 	BigInt divResult = p2.divide(p1);
 	BigInt modResult = p2.mod(p1);
+	BigInt modPowResult =  p1.modPow(p3, p2);
+	BigInt modInv = p4.modInv(p5);
 
 
 	cout<<"p1 + p2 = "<< addResult.toString()<<"\n";
@@ -650,6 +824,9 @@ int main() {
 	cout<<"p1 * p2 = "<< mulResult.toString()<<"\n";
 	cout<<"p2 / p1 = "<< divResult.toString()<<"\n";
 	cout<<"p2 % p1 = "<< modResult.toString()<<"\n";
+	cout<<"(p1 ^ p3) mod p2 = "<< modPowResult.toString()<<"\n";
+	cout<<"p4 modInv p5 = "<< modInv.toString()<<"\n";
+
 
 
 }
