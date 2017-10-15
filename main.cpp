@@ -579,6 +579,13 @@ public:
 		return 0;
 	}
 
+	BigInt mod(BigInt & other)
+	{
+		//if (isZero(other.digitsString))
+		//cout << "non-positive modulus" << "\n";
+
+		return divide(other, "r");
+	}
 	string removeZeros(string str) {
 
 		int index = 0;
@@ -628,18 +635,22 @@ public:
 
 int main() {
 
-	BigInt p1("111");
+	BigInt p1("11");
 	BigInt p2("222");
 
 	BigInt addResult = p1.add(p2);
 	BigInt subResult = p1.sub(p2);
 	BigInt mulResult = p1.multiply(p2);
 	BigInt divResult = p2.divide(p1);
+	BigInt modResult = p2.mod(p1);
+
 
 	cout<<"p1 + p2 = "<< addResult.toString()<<"\n";
 	cout<<"p1 - p2 = "<< subResult.toString()<<"\n";
 	cout<<"p1 * p2 = "<< mulResult.toString()<<"\n";
 	cout<<"p2 / p1 = "<< divResult.toString()<<"\n";
+	cout<<"p2 % p1 = "<< modResult.toString()<<"\n";
+
 
 }
 
